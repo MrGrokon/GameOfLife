@@ -11,6 +11,7 @@ public class GameOfLife_Master : MonoBehaviour
     [SerializeField] GameState MyGameState = GameState.Init;
     private float _elapsedTime;
     private bool _gameIsRunning;
+    public Color BorderColor = Color.white;
 
     enum GameState{
         Init,
@@ -21,7 +22,7 @@ public class GameOfLife_Master : MonoBehaviour
 
     void Awake()
     {
-        GOL_Grid = new CustomGrid(this.transform, 10, 10, .5f);
+        GOL_Grid = new CustomGrid(this.transform, 75, 75, .1f);
     }
 
     void Update()

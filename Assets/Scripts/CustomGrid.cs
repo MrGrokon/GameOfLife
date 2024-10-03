@@ -19,8 +19,6 @@ public class CustomGrid
     //will contain the alive/death states for every Tiles.
     //this could be remove and replaced by if(Cells[x,y] != null) ?
     private bool[,] GridArray;
-    //same but for the next generation
-    private bool[,] NextGenerationGrid;
 
     #region Instancieur
         public CustomGrid(Transform _parent, int _width, int _height, float _cellSize = 10f, Vector3 _origine = default(Vector3)){
@@ -31,20 +29,17 @@ public class CustomGrid
             this.GridOrigine = _origine;
     
             InitializeGrid();
-            InitGrid();
+            RandomlyInitGrid();
         }
-    #endregion
 
-    #region Methods
         private void InitializeGrid(){
             GridArray = new bool[Width, Height];
-            NextGenerationGrid = new bool[Width, Height];
             Cells = new GameObject[Width, Height];
             //Debug.Log(Width + " / " + Height);
             DrawGridRenderer();
         }
     
-        private void InitGrid(bool _initValue = true){
+        private void RandomlyInitGrid(bool _initValue = true){
             for (int x = 0; x < GridArray.GetLength(0); x++){
                 //iterate through Width (Left -> Right)
                 for (int y = 0; y < GridArray.GetLength(1); y++){
@@ -57,41 +52,121 @@ public class CustomGrid
                 }
             }
         }
-    
-        private void RefreshGrid(){
-            FlushGrid();
-            GenerateNewGeneration();
+    #endregion
+
+    #region Public Methods
+        public void RefreshGrid(out bool GameIsRunning){
+            FlushGridRendering(); //clear old generation rendered
+            GenerateNewGeneration(); //compute 
+            DrawAllAliveCells();
+            GameIsRunning = true;
         }
+    
+        public void ClearGrid(){
+            for (int x = 0; x < GridArray.GetLength(0); x++){
+                for (int y = 0; y < GridArray.GetLength(1); y++){
+                    GridArray[x,y] = false;
+                    GameObject.Destroy(Cells[x,y]);
+                }
+            }
+        }
+
+        #region Public Get/Set
+            public void ChangeValue(int x, int y){
+                if(x >=0 && y >= 0 && x < Width && y < Height){
+                    //if the coordinate test existing in my grid
+                    //invert the value contained at this index
+                    bool _b =!GridArray[x, y];
+                    GridArray[x, y] = _b;
+                    //draw a cell at the index
+                    if(_b){
+                        DrawAliveCell(x, y);
+                    }
+                    else{
+                        GameObject.Destroy(Cells[x,y]);
+                    }
+                }
+                else
+                    Debug.Log("Warning Something fucked up");
+                }
+        
+            public void ChangeValue(Vector3 _worlPosition){
+                int _x, _y;
+                GetXY(_worlPosition, out _x, out _y);
+                ChangeValue(_x, _y);
+            }
+              
+            public bool GetValue(int x, int y){
+                if(x >=0 && y >= 0 && x < Width && y < Height){
+                    return GridArray[x,y];
+                }
+                else{
+                    Debug.Log("ERROR: No Cell at this index");
+                }
+                return false;
+            }
+            
+            public bool GetValue(Vector3 _worldPosition){
+                int _x, _y;
+                GetXY(_worldPosition, out _x, out _y);
+                return GetValue(_x, _y);
+            }
+        #endregion
     #endregion
 
     #region New Generation Computing
-        public void GenerateNewGeneration(){
+        private void GenerateNewGeneration(){
+            bool[,] _nextGeneration = new bool[Width, Height];
+
             for (int x=0; x < GridArray.GetLength(0); x++){
                 //iterate through Width (Left -> Right)
                 for (int y=0; y < GridArray.GetLength(1); y++){
                     //iterate through Height (Bottom -> Top)
                     bool _isAlive = IsCellAliveNextState(x,y);
-                    NextGenerationGrid[x,y] = _isAlive;
+                    _nextGeneration[x,y] = _isAlive;
+                    /*
+                    //bad idead to mix computation and spawning ?
                     if(_isAlive){
                         DrawAliveCell(x,y);
                     }
+                    */
                 }
             }
+            GridArray = _nextGeneration;
         }
 
-        private bool IsCellAliveNextState(int X, int Y){
+        //public for debug reason
+        public bool IsCellAliveNextState(int X, int Y, out string _msg){
                 int _neighbourAlives = GetNumberOfNeighboursAlive(X,Y);
-                if(GridArray[X,Y]==true && _neighbourAlives == 2 && _neighbourAlives == 3){
+                if(GridArray[X,Y]==true && _neighbourAlives == 2 || _neighbourAlives == 3){
                     //if my tile is alive && with 2 our 3 neighbours i stay alive
+                    _msg = "StayAlive";
                     return true;
                 }
                 else if(GridArray[X,Y]==false && _neighbourAlives == 3){
                     //if im dead and i have exactly 3 neighbour i came back to live by reproduction
+                    _msg = "Reproduction";
                     return true;
                 }
                 //if not i die by Overpopulation, Underpopulation or Stay Dead
+                _msg = "Stay Dead or Overpopulation";
                 return false;
             }
+
+        //public for debug reason
+        public bool IsCellAliveNextState(int X, int Y){
+            int _neighbourAlives = GetNumberOfNeighboursAlive(X,Y);
+            if(GridArray[X,Y]==true && _neighbourAlives == 2 || _neighbourAlives == 3){
+                //if my tile is alive && with 2 our 3 neighbours i stay alive
+                return true;
+            }
+            else if(GridArray[X,Y]==false && _neighbourAlives == 3){
+                //if im dead and i have exactly 3 neighbour i came back to live by reproduction
+                return true;
+            }
+            //if not i die by Overpopulation, Underpopulation or Stay Dead
+            return false;
+        }
     
         private int GetNumberOfNeighboursAlive(int X, int Y){
             int _count = 0;
@@ -176,7 +251,7 @@ public class CustomGrid
                 if(GridArray[X+1,Y-1]) _count++;
                 if(GridArray[X+1,Y+1]) _count++;
             }
-            Debug.Log("X: " + X + " / Y: " + Y + "  -> " + _count);
+            //Debug.Log("X: " + X + " / Y: " + Y + "  -> " + _count);
             return _count;
         }
 
@@ -187,56 +262,8 @@ public class CustomGrid
             return GetNumberOfNeighboursAlive(_x, _y);
         }
     
-        //public for debbug reasons
-        public void FlushGrid(){
-                for (int x = 0; x < GridArray.GetLength(0); x++){
-                    for (int y = 0; y < GridArray.GetLength(1); y++){
-                        GridArray[x,y] = false;
-                        GameObject.Destroy(Cells[x,y]);
-                    }
-                }
-            }
+        
     #endregion
-    
-    public void ChangeValue(int x, int y){
-        if(x >=0 && y >= 0 && x < Width && y < Height){
-            //if the coordinate test existing in my grid
-            //invert the value contained at this index
-            bool _b =!GridArray[x, y];
-            GridArray[x, y] = _b;
-            //draw a cell at the index
-            if(_b){
-                DrawAliveCell(x, y);
-            }
-            else{
-                GameObject.Destroy(Cells[x,y]);
-            }
-        }
-        else
-            Debug.Log("Warning Something fucked up");
-        }
-
-    public void ChangeValue(Vector3 _worlPosition){
-        int _x, _y;
-        GetXY(_worlPosition, out _x, out _y);
-        ChangeValue(_x, _y);
-    }
-      
-    public bool GetValue(int x, int y){
-        if(x >=0 && y >= 0 && x < Width && y < Height){
-            return GridArray[x,y];
-        }
-        else{
-            Debug.Log("ERROR: No Cell at this index");
-        }
-        return false;
-    }
-    
-    public bool GetValue(Vector3 _worldPosition){
-        int _x, _y;
-        GetXY(_worldPosition, out _x, out _y);
-        return GetValue(_x, _y);
-    }
 
     #region Rendering Functions
         private void DrawGridRenderer(){
@@ -271,6 +298,25 @@ public class CustomGrid
             _cell.transform.position = GetWorldPosition(x, y) + new Vector3(UniformCellSize/2, UniformCellSize/2, 0f);
             _cell.transform.localScale = new Vector3(UniformCellSize, UniformCellSize, UniformCellSize);
             Cells[x,y] = _cell;
+        }
+
+        private void DrawAllAliveCells(){
+            for (int x=0; x < GridArray.GetLength(0); x++){
+                for (int y=0; y < GridArray.GetLength(1); y++){
+                    if(GridArray[x,y]){
+                        DrawAliveCell(x,y);
+                    }
+                }
+            }
+        }
+
+        private void FlushGridRendering(){
+            for (int x = 0; x < GridArray.GetLength(0); x++){
+                for (int y = 0; y < GridArray.GetLength(1); y++){
+                    //GridArray[x,y] = false;
+                    GameObject.Destroy(Cells[x,y]);
+                }
+            }
         }
     #endregion
 

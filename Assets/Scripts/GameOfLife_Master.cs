@@ -10,6 +10,7 @@ public class GameOfLife_Master : MonoBehaviour
     private int GenerationCount = 0;
     [SerializeField] GameState MyGameState = GameState.Init;
     private float _elapsedTime;
+    private bool _gameIsRunning;
 
     enum GameState{
         Init,
@@ -20,7 +21,7 @@ public class GameOfLife_Master : MonoBehaviour
 
     void Awake()
     {
-        GOL_Grid = new CustomGrid(this.transform, 50, 50, .25f);
+        GOL_Grid = new CustomGrid(this.transform, 10, 10, .5f);
     }
 
     void Update()
@@ -36,7 +37,8 @@ public class GameOfLife_Master : MonoBehaviour
                 case GameState.Playing:
                     _elapsedTime += Time.deltaTime;
                     if(_elapsedTime >= GenerationLifeTime){
-                        GOL_Grid.GenerateNewGeneration();
+                        GOL_Grid.RefreshGrid(out _gameIsRunning);
+                        GenerationCount++;
                         _elapsedTime = 0f;
                     }
                 break;
@@ -64,7 +66,18 @@ public class GameOfLife_Master : MonoBehaviour
             }
 
             if(Input.GetKeyDown(KeyCode.R)){
-                GOL_Grid.FlushGrid();
+                GOL_Grid.ClearGrid();
+            }
+
+            if(Input.GetMouseButtonDown(1)){
+                int _x, _y;
+                GOL_Grid.GetXY(GetMousePosition(), out _x, out _y);
+                Debug.Log("X: " + _x + " / Y: " + _y + " -> " + GOL_Grid.IsCellAliveNextState(_x, _y));
+            }
+
+            if(Input.GetKeyDown(KeyCode.A)){
+                GOL_Grid.RefreshGrid(out _gameIsRunning);
+                GenerationCount++;
             }
         }
     #endregion

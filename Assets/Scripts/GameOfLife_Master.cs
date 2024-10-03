@@ -6,31 +6,68 @@ public class GameOfLife_Master : MonoBehaviour
 {
     private CustomGrid GOL_Grid;
 
+    [SerializeField][Range(0.01f, 1f)] public float GenerationLifeTime = 0.25f;
+    private int GenerationCount = 0;
+    [SerializeField] GameState MyGameState = GameState.Init;
+    private float _elapsedTime;
+
+    enum GameState{
+        Init,
+        Playing,
+        Paused,
+        DeadEnd
+    };
+
     void Awake()
     {
-        GOL_Grid = new CustomGrid(this.transform, 25, 25, .25f);
-        //GOL_Grid.SetValue(5,5, 100);
+        GOL_Grid = new CustomGrid(this.transform, 50, 50, .25f);
     }
 
     void Update()
     {
-        if (GOL_Grid != null)
-        {
-            if(Input.GetMouseButtonDown(0)){
-                Debug.Log(GOL_Grid.GetValue(GetMousePosition()));
-            }
-    
-            if(Input.GetMouseButtonDown(1)){
-                GOL_Grid.SetValue(GetMousePosition(), -100);
-            }
+        if(GOL_Grid != null){
+            switch (MyGameState)
+            {
+                case GameState.Init:
+                    CheckChangeSimulationState(GameState.Playing);
+                    InitializerInputs();
+                break;
 
-            if(Input.GetKeyDown(KeyCode.Space)){
-                GOL_Grid.Init();
+                case GameState.Playing:
+                    _elapsedTime += Time.deltaTime;
+                    if(_elapsedTime >= GenerationLifeTime){
+                        GOL_Grid.GenerateNewGeneration();
+                        _elapsedTime = 0f;
+                    }
+                break;
+
+                case GameState.Paused:
+                    CheckChangeSimulationState(GameState.Playing);
+                    _elapsedTime = 0f;
+                break;
             }
         }
         else
             Debug.Log("ERROR: Grid Undefined");
     }
+    
+    #region Input Actions
+        private void CheckChangeSimulationState(GameState newState){
+            if(Input.GetKeyDown(KeyCode.Space)){
+                MyGameState = newState;
+            }
+        }
+
+        private void InitializerInputs(){
+            if(Input.GetMouseButtonDown(0)){
+                GOL_Grid.ChangeValue(GetMousePosition());
+            }
+
+            if(Input.GetKeyDown(KeyCode.R)){
+                GOL_Grid.FlushGrid();
+            }
+        }
+    #endregion
 
     #region Misc
         private Vector3 GetMousePosition(){

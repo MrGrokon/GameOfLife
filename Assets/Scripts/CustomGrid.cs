@@ -20,6 +20,8 @@ public class CustomGrid
     //this could be remove and replaced by if(Cells[x,y] != null) ?
     private bool[,] GridArray;
 
+    private List<LineRenderer> GridLines;
+
     #region Instancieur
         public CustomGrid(Transform _parent, int _width, int _height, float _cellSize = 10f, Vector3 _origine = default(Vector3)){
             this.Parent = _parent;
@@ -27,6 +29,7 @@ public class CustomGrid
             this.Height = _height;
             this.UniformCellSize = _cellSize;
             this.GridOrigine = _origine;
+            GridLines = new List<LineRenderer>();
     
             InitializeGrid();
         }
@@ -71,6 +74,32 @@ public class CustomGrid
                 for (int y = 0; y < GridArray.GetLength(1); y++){
                     GridArray[x,y] = false;
                     GameObject.Destroy(Cells[x,y]);
+                }
+            }
+        }
+
+        public void ChangeGridRendererState(bool _newState){
+            foreach (var line in GridLines){
+                line.enabled = _newState;
+            }
+        }
+
+        public void DrawPattern(Pattern _pattern, Vector3 _worldPosition){
+            int _x, _y;
+            GetXY(_worldPosition, out _x, out _y);
+            
+            //is my origine inside the grid ?
+            if(_x >= 0 && _y >= 0 && _x < Width && _y < Height){
+        
+                for (int i=0; i < _pattern.Cells.Length; i++){
+                    int newX = _x + (_pattern.Cells[i].x - _pattern.GetOrigin().x);
+                    int newY = _y + (_pattern.Cells[i].y - _pattern.GetOrigin().y);
+
+                    //is the cell about to be created is inside the grid ?
+                    if(newX >= 0 && newY >= 0 && newX < Width && newY < Height){
+                        GridArray[newX, newY] = true;
+                        DrawAliveCell(newX, newY);
+                    }
                 }
             }
         }
@@ -295,6 +324,7 @@ public class CustomGrid
                 LineRenderer _lr = _line.GetComponent<LineRenderer>();
                 _lr.SetPosition(0, _start);
                 _lr.SetPosition(1, _end);
+                GridLines.Add(_lr);
         }
 
         private void DrawBorders(){

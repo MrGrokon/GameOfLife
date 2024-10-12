@@ -587,10 +587,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Patterns:
-  - {fileID: 11400000, guid: 4d388380b9f10f2449fa042f93931b2f, type: 2}
+  - {fileID: 11400000, guid: 3ea04c86bbca8374c92c5868d2bff406, type: 2}
   - {fileID: 11400000, guid: 3f47e7886009f91499fd2c4e131ba1a0, type: 2}
   - {fileID: 11400000, guid: 49c4f28f79f65d7439193f23d0ba638c, type: 2}
   - {fileID: 11400000, guid: 9d828be9ad1fabe4e85fc3eb40af33d9, type: 2}
+  - {fileID: 11400000, guid: 4d388380b9f10f2449fa042f93931b2f, type: 2}
 --- !u!1 &139026665
 GameObject:
   m_ObjectHideFlags: 0
@@ -1190,8 +1191,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GenerationLifeTime: 0.1
-  MyGameState: 0
-  BorderColor: {r: 1, g: 1, b: 1, a: 0}
+  size: {x: 50, y: 50}
 --- !u!1 &502765441
 GameObject:
   m_ObjectHideFlags: 0

@@ -5,17 +5,21 @@ using UnityEngine;
 
 public class GameOfLife_Master : MonoBehaviour
 {
-    private CustomGrid GOL_Grid;
-    public static GameOfLife_Master Instance;
+    //User Defined
+    [SerializeField][Range(0.01f, 1f)] float GenerationLifeTime = 0.25f;
+    [SerializeField] Vector2Int GridSize;
+    [SerializeField][Range(0.01f, 1f)] float LineThiccness = .2f;
 
-    [SerializeField][Range(0.01f, 1f)] public float GenerationLifeTime = 0.25f;
+    //private
+    private CustomGrid GOL_Grid;
     private int GenerationCount = 0;
-    [SerializeField] GameState MyGameState = GameState.Init;
+    GameState MyGameState = GameState.Init;
     private float _elapsedTime;
     private bool _gameIsRunning;
-    public Color BorderColor = Color.white;
+    private Pattern ActivePattern;
 
-    private Pattern _UsedPattern;
+    //public
+    public static GameOfLife_Master Instance;
 
     public enum GameState{
         Init,
@@ -27,7 +31,7 @@ public class GameOfLife_Master : MonoBehaviour
     void Awake()
     {
         SingletonInstance();
-        GOL_Grid = new CustomGrid(this.transform, 50, 50, .2f);
+        GOL_Grid = new CustomGrid(this.transform, GridSize.x, GridSize.y, LineThiccness);
     }
 
     void Update()
@@ -64,18 +68,7 @@ public class GameOfLife_Master : MonoBehaviour
             }
 
             if(Input.GetMouseButtonDown(1)){
-                int _x, _y;
-                GOL_Grid.GetXY(GetMousePosition(), out _x, out _y);
-                Debug.Log("X: " + _x + " / Y: " + _y + " -> " + GOL_Grid.IsCellAliveNextState(_x, _y));
-            }
-
-            if(Input.GetKeyDown(KeyCode.A)){
-                GOL_Grid.RefreshGrid(out _gameIsRunning);
-                IncrementGenCount();
-            }
-
-            if(Input.GetKeyDown(KeyCode.Space)){
-                Debug.Log("Extent: " + _UsedPattern.GetExtent() + " Origine: " + _UsedPattern.GetOrigin() );
+                GOL_Grid.DrawPattern(ActivePattern, GetMousePosition());
             }
         }
     #endregion
@@ -122,15 +115,17 @@ public class GameOfLife_Master : MonoBehaviour
 
         public void ProceedWithSimulation(){
             MyGameState = GameState.Playing;
+            GOL_Grid.ChangeGridRendererState(false);
         }
 
         public void PauseSimulation(){
             MyGameState = GameState.Paused;
+            GOL_Grid.ChangeGridRendererState(true);
             _elapsedTime = 0f;
         }
 
         public void ChangePatternUsed(Pattern newPattern){
-            _UsedPattern = newPattern;
+            ActivePattern = newPattern;
         }
     #endregion
     

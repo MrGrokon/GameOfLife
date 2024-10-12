@@ -15,6 +15,7 @@ public class Pattern : ScriptableObject
         return new Vector2Int(Mathf.CeilToInt(_max.x/2), Mathf.CeilToInt(_max.y/2));
     }
 
+    //deprecated
     public Vector2Int GetExtent(){
         //return max dimension / 2 to create a security margin at grid borders
         Vector2Int _max = GetMaxIndex();

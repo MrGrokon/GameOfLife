@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cd84691bca56464c972fe92efdda4ec, type: 3}
   m_Name: Tile
   m_EditorClassIdentifier: 
-  Name: 
-  Cells: []
+  Name: Unique Tile
+  Cells:
+  - {x: 0, y: 0}

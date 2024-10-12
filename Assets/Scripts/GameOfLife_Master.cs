@@ -7,7 +7,7 @@ public class GameOfLife_Master : MonoBehaviour
 {
     //User Defined
     [SerializeField][Range(0.01f, 1f)] float GenerationLifeTime = 0.25f;
-    [SerializeField] Vector2Int GridSize;
+    [SerializeField][Range(1, 200)] int GridSize = 50;
     [SerializeField][Range(0.01f, 1f)] float LineThiccness = .2f;
 
     //private
@@ -31,7 +31,7 @@ public class GameOfLife_Master : MonoBehaviour
     void Awake()
     {
         SingletonInstance();
-        GOL_Grid = new CustomGrid(this.transform, GridSize.x, GridSize.y, LineThiccness);
+        GOL_Grid = new CustomGrid(this.transform, GridSize, GridSize, LineThiccness);
     }
 
     void Update()

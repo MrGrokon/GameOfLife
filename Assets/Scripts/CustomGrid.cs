@@ -29,7 +29,6 @@ public class CustomGrid
             this.GridOrigine = _origine;
     
             InitializeGrid();
-            RandomlyInitGrid();
         }
 
         private void InitializeGrid(){
@@ -39,7 +38,7 @@ public class CustomGrid
             DrawGridRenderer();
         }
     
-        private void RandomlyInitGrid(bool _initValue = true){
+        private void RandomlyInitGrid(){
             for (int x = 0; x < GridArray.GetLength(0); x++){
                 //iterate through Width (Left -> Right)
                 for (int y = 0; y < GridArray.GetLength(1); y++){
@@ -57,9 +56,14 @@ public class CustomGrid
     #region Public Methods
         public void RefreshGrid(out bool GameIsRunning){
             FlushGridRendering(); //clear old generation rendered
-            GenerateNewGeneration(); //compute 
-            DrawAllAliveCells();
-            GameIsRunning = true;
+            GenerateNewGeneration(); //compute next gen
+            DrawAllAliveCells(); //draw all next gen cells
+            GameIsRunning = IsStillOneCellLeftAlive(); //check if all tiles a alive -> if not game is over
+        }
+
+        public void RandomizeGrid(){
+            FlushGridRendering();
+            RandomlyInitGrid();
         }
     
         public void ClearGrid(){
@@ -87,7 +91,7 @@ public class CustomGrid
                     }
                 }
                 else
-                    Debug.Log("Warning Something fucked up");
+                    Debug.Log("Warning: Clicked outside of grid");
                 }
         
             public void ChangeValue(Vector3 _worlPosition){
@@ -262,7 +266,16 @@ public class CustomGrid
             return GetNumberOfNeighboursAlive(_x, _y);
         }
     
-        
+        private bool IsStillOneCellLeftAlive(){
+            for (int x=0; x < GridArray.GetLength(0); x++){
+                for (int y = 0; y < GridArray.GetLength(1); y++){
+                    if(GridArray[x,y]==true){
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     #endregion
 
     #region Rendering Functions

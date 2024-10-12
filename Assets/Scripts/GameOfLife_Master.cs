@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,6 +6,7 @@ using UnityEngine;
 public class GameOfLife_Master : MonoBehaviour
 {
     private CustomGrid GOL_Grid;
+    public static GameOfLife_Master Instance;
 
     [SerializeField][Range(0.01f, 1f)] public float GenerationLifeTime = 0.25f;
     private int GenerationCount = 0;
@@ -13,7 +15,9 @@ public class GameOfLife_Master : MonoBehaviour
     private bool _gameIsRunning;
     public Color BorderColor = Color.white;
 
-    enum GameState{
+    private Pattern _UsedPattern;
+
+    public enum GameState{
         Init,
         Playing,
         Paused,
@@ -22,7 +26,8 @@ public class GameOfLife_Master : MonoBehaviour
 
     void Awake()
     {
-        GOL_Grid = new CustomGrid(this.transform, 75, 75, .1f);
+        SingletonInstance();
+        GOL_Grid = new CustomGrid(this.transform, 50, 50, .2f);
     }
 
     void Update()
@@ -31,7 +36,6 @@ public class GameOfLife_Master : MonoBehaviour
             switch (MyGameState)
             {
                 case GameState.Init:
-                    CheckChangeSimulationState(GameState.Playing);
                     InitializerInputs();
                 break;
 
@@ -39,14 +43,13 @@ public class GameOfLife_Master : MonoBehaviour
                     _elapsedTime += Time.deltaTime;
                     if(_elapsedTime >= GenerationLifeTime){
                         GOL_Grid.RefreshGrid(out _gameIsRunning);
-                        GenerationCount++;
+                        IncrementGenCount();
                         _elapsedTime = 0f;
+                        if(_gameIsRunning == false){
+                            MyGameState = GameState.DeadEnd;
+                            UI_Behaviors.Instance.DisplayGameOverScreen();
+                        }
                     }
-                break;
-
-                case GameState.Paused:
-                    CheckChangeSimulationState(GameState.Playing);
-                    _elapsedTime = 0f;
                 break;
             }
         }
@@ -55,19 +58,9 @@ public class GameOfLife_Master : MonoBehaviour
     }
     
     #region Input Actions
-        private void CheckChangeSimulationState(GameState newState){
-            if(Input.GetKeyDown(KeyCode.Space)){
-                MyGameState = newState;
-            }
-        }
-
         private void InitializerInputs(){
             if(Input.GetMouseButtonDown(0)){
                 GOL_Grid.ChangeValue(GetMousePosition());
-            }
-
-            if(Input.GetKeyDown(KeyCode.R)){
-                GOL_Grid.ClearGrid();
             }
 
             if(Input.GetMouseButtonDown(1)){
@@ -78,7 +71,11 @@ public class GameOfLife_Master : MonoBehaviour
 
             if(Input.GetKeyDown(KeyCode.A)){
                 GOL_Grid.RefreshGrid(out _gameIsRunning);
-                GenerationCount++;
+                IncrementGenCount();
+            }
+
+            if(Input.GetKeyDown(KeyCode.Space)){
+                Debug.Log("Extent: " + _UsedPattern.GetExtent() + " Origine: " + _UsedPattern.GetOrigin() );
             }
         }
     #endregion
@@ -89,5 +86,52 @@ public class GameOfLife_Master : MonoBehaviour
             _v.z = 0f;
             return _v;
         }
+
+        private void IncrementGenCount(){
+            GenerationCount++;
+            UI_Behaviors.Instance.ChangeGenerationCounter(GenerationCount);
+        }
+
+        private void ResetGenCount(){
+            GenerationCount = 0;
+            UI_Behaviors.Instance.ChangeGenerationCounter(GenerationCount);
+        }
+
+        private void SingletonInstance(){
+            if(Instance == null){
+                Instance = this;
+            }
+            else{
+                Destroy(this);
+            }
+        }
+
+        public GameState GetGameState(){
+            return MyGameState;
+        }
     #endregion
+
+    #region Public Entry Points
+        public CustomGrid GetGrid(){
+            return GOL_Grid;
+        }
+
+        public int GetGenCount(){
+            return GenerationCount;
+        }
+
+        public void ProceedWithSimulation(){
+            MyGameState = GameState.Playing;
+        }
+
+        public void PauseSimulation(){
+            MyGameState = GameState.Paused;
+            _elapsedTime = 0f;
+        }
+
+        public void ChangePatternUsed(Pattern newPattern){
+            _UsedPattern = newPattern;
+        }
+    #endregion
+    
 }
